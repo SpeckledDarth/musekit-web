@@ -1,0 +1,18 @@
+{
+  "name": "@musekit/shared",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.3.0"
+  },
+  "devDependencies": {
+    "@musekit/config-ts": "*",
+    "typescript": "^5.5.0"
+  }
+}

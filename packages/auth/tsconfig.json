@@ -1,0 +1,7 @@
+{
+  "extends": "@musekit/config-ts/library.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
