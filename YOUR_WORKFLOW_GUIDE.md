@@ -8,23 +8,25 @@
 
 ## Table of Contents
 
-1. [Before You Start — Protect What You Have](#1-before-you-start--protect-what-you-have)
-2. [One-Time GitHub Setup](#2-one-time-github-setup)
-2B. [Secrets Reference — Which Secrets Go Where](#2b-secrets-reference--which-secrets-go-where)
-2C. [Confirmed Tech Stack](#2c-confirmed-tech-stack)
-2D. [Open Issues Tracker](#2d-open-issues-tracker)
-3. [How Each Module Session Works (Your Repeatable Process)](#3-how-each-module-session-works-your-repeatable-process)
-4. [Phase 1: Foundation Modules](#4-phase-1-foundation-modules-sessions-2-4)
-5. [Phase 2: Core Service Modules](#5-phase-2-core-service-modules-sessions-5-8)
-6. [Phase 3: First Integration Checkpoint](#6-phase-3-first-integration-checkpoint-session-9)
-7. [Phase 4: Feature Modules](#7-phase-4-feature-modules-sessions-10-14)
-8. [Phase 5: PassivePost](#8-phase-5-passivepost-sessions-15-17)
-9. [Phase 6: Production Launch](#9-phase-6-production-launch-session-18)
-10. [How to Verify Each Session's Work](#10-how-to-verify-each-sessions-work)
-11. [Timeline for 4/1/26 Launch](#11-timeline-for-4126-launch)
-12. [Quick Reference — All Initialization Prompts](#12-quick-reference--all-initialization-prompts)
+1. [Before You Start — Protect What You Have](#before-you-start)
+2. [One-Time GitHub Setup](#github-setup)
+3. [Secrets Reference — Which Secrets Go Where](#secrets-reference)
+4. [Confirmed Tech Stack](#confirmed-tech-stack)
+5. [Open Issues Tracker](#open-issues-tracker)
+6. [How Each Module Session Works](#repeatable-process)
+7. [Phase 1: Foundation Modules (Sessions 2-4)](#phase-1)
+8. [Phase 2: Core Service Modules (Sessions 5-8)](#phase-2)
+9. [Phase 3: First Integration Checkpoint (Session 9)](#phase-3)
+10. [Phase 4: Feature Modules (Sessions 10-14)](#phase-4)
+11. [Phase 5: PassivePost (Sessions 15-17)](#phase-5)
+12. [Phase 6: Production Launch (Session 18)](#phase-6)
+13. [How to Verify Each Session's Work](#verify-work)
+14. [Timeline for 4/1/26 Launch](#timeline)
+15. [Quick Reference — All Initialization Prompts](#initialization-prompts)
 
 ---
+
+<a id="before-you-start"></a>
 
 ## 1. Before You Start — Protect What You Have
 
@@ -53,42 +55,44 @@ Before creating any new Repls, make sure your existing assets are safe.
 
 ---
 
+<a id="github-setup"></a>
+
 ## 2. One-Time GitHub Setup
 
 **Time needed: ~15-20 minutes**
 
-### Create 11 New Private Repos
+### Create 11 New Public Repos ✅ DONE
 
 Go to [github.com/new](https://github.com/new) and create each of these repos.
 
 For every repo, use these settings:
 - **Owner:** SpeckledDarth (your account)
-- **Visibility:** Private
+- **Visibility:** Public (keeps things simple — no GitHub token needed when module Repls install each other as dependencies. No secrets are stored in code, so public is safe.)
 - **Initialize:** Leave everything unchecked (no README, no .gitignore, no license)
 
 Create these repos:
 
-| # | Repo Name | What It Will Contain |
-|---|-----------|---------------------|
-| 1 | `musekit-shared` | Types, utilities, constants |
-| 2 | `musekit-design-system` | UI components, tokens, color system |
-| 3 | `musekit-database` | Supabase client code, schema types, query helpers |
-| 4 | `musekit-auth` | Login, signup, OAuth, middleware |
-| 5 | `musekit-billing` | Stripe subscriptions, checkout, webhooks |
-| 6 | `musekit-email` | Resend templates, editor, scheduled reports |
-| 7 | `musekit-services` | Notifications, webhooks, AI, background jobs |
-| 8 | `musekit-admin` | Admin dashboard (all 30+ feature areas) |
-| 9 | `musekit-cms` | Blog, landing pages, legal pages, SEO |
-| 10 | `musekit-affiliate` | Affiliate program, referrals, payouts |
-| 11 | `musekit-passivepost` | PassivePost social media product |
-
-**You do NOT need to create all of these today.** You can create them one at a time as you reach that point in the build order. But creating them all now saves you from context-switching later.
+| # | Repo Name | What It Will Contain | Created? |
+|---|-----------|---------------------|----------|
+| 1 | `musekit-shared` | Types, utilities, constants | ✅ |
+| 2 | `musekit-design-system` | UI components, tokens, color system | ✅ |
+| 3 | `musekit-database` | Supabase client code, schema types, query helpers | ✅ |
+| 4 | `musekit-auth` | Login, signup, OAuth, middleware | ✅ |
+| 5 | `musekit-billing` | Stripe subscriptions, checkout, webhooks | ✅ |
+| 6 | `musekit-email` | Resend templates, editor, scheduled reports | ✅ |
+| 7 | `musekit-services` | Notifications, webhooks, AI, background jobs | ✅ |
+| 8 | `musekit-admin` | Admin dashboard (all 30+ feature areas) | ✅ |
+| 9 | `musekit-cms` | Blog, landing pages, legal pages, SEO | ✅ |
+| 10 | `musekit-affiliate` | Affiliate program, referrals, payouts | ✅ |
+| 11 | `musekit-passivepost` | PassivePost social media product | ✅ |
 
 Your existing repo `master-saas-muse` stays as-is — that becomes the integration repo.
 
 ---
 
-## 2B. Secrets Reference — Which Secrets Go Where
+<a id="secrets-reference"></a>
+
+## 3. Secrets Reference — Which Secrets Go Where
 
 Your monolithic app has 27 secrets + 1 configuration. Not every Repl needs all of them. Here's the complete mapping so you know exactly which secrets to add to each Repl.
 
@@ -266,7 +270,9 @@ At integration time, this Repl needs every secret because it runs the full app. 
 
 ---
 
-## 2C. Confirmed Tech Stack
+<a id="confirmed-tech-stack"></a>
+
+## 4. Confirmed Tech Stack
 
 This is the verified, agreed-upon technology stack. Every module session should reference this to avoid assumptions or guessing.
 
@@ -351,7 +357,9 @@ This is the verified, agreed-upon technology stack. Every module session should 
 
 ---
 
-## 2D. Open Issues Tracker
+<a id="open-issues-tracker"></a>
+
+## 5. Open Issues Tracker
 
 These are known issues that will be addressed at specific points during the build. Every initialization prompt should remind the agent of any open issues relevant to that module.
 
@@ -381,7 +389,9 @@ These are known issues that will be addressed at specific points during the buil
 
 ---
 
-## 3. How Each Module Session Works (Your Repeatable Process)
+<a id="repeatable-process"></a>
+
+## 6. How Each Module Session Works (Your Repeatable Process)
 
 Every module follows the exact same process. Once you do it once, you'll be able to do it in your sleep.
 
@@ -444,7 +454,9 @@ The Repl auto-commits to GitHub, but double-check:
 
 ---
 
-## 4. Phase 1: Foundation Modules (Sessions 2-4)
+<a id="phase-1"></a>
+
+## 7. Phase 1: Foundation Modules (Sessions 2-4)
 
 These modules have zero dependencies on other modules. They're the building blocks everything else uses.
 
@@ -510,7 +522,9 @@ These modules have zero dependencies on other modules. They're the building bloc
 
 ---
 
-## 5. Phase 2: Core Service Modules (Sessions 5-8)
+<a id="phase-2"></a>
+
+## 8. Phase 2: Core Service Modules (Sessions 5-8)
 
 These modules depend on Phase 1 modules. They provide the core services (auth, billing, email, etc.) that the feature modules build on top of.
 
@@ -572,7 +586,9 @@ These modules depend on Phase 1 modules. They provide the core services (auth, b
 
 ---
 
-## 6. Phase 3: First Integration Checkpoint (Session 9)
+<a id="phase-3"></a>
+
+## 9. Phase 3: First Integration Checkpoint (Session 9)
 
 **This session happens in THIS Repl** (musekit-web / master-saas-muse). You do NOT create a new Repl.
 
@@ -629,7 +645,9 @@ You have a running integrated app with auth, billing, email, and core services. 
 
 ---
 
-## 7. Phase 4: Feature Modules (Sessions 10-14)
+<a id="phase-4"></a>
+
+## 10. Phase 4: Feature Modules (Sessions 10-14)
 
 ### Sessions 10-11: `musekit-admin` (2 sessions)
 
@@ -685,7 +703,9 @@ After this checkpoint: You have the full MuseKit core running — admin dashboar
 
 ---
 
-## 8. Phase 5: PassivePost (Sessions 15-17)
+<a id="phase-5"></a>
+
+## 11. Phase 5: PassivePost (Sessions 15-17)
 
 ### Sessions 15-16: `musekit-passivepost` (2 sessions)
 
@@ -712,7 +732,9 @@ After this: The complete app is assembled and working.
 
 ---
 
-## 9. Phase 6: Production Launch (Session 18)
+<a id="phase-6"></a>
+
+## 12. Phase 6: Production Launch (Session 18)
 
 **This Repl** (musekit-web). Configure Vercel deployment, switch to production Supabase, set Stripe to live mode, configure Sentry and Plausible, set up custom domain.
 
@@ -720,7 +742,9 @@ After this: Live in production.
 
 ---
 
-## 10. How to Verify Each Session's Work
+<a id="verify-work"></a>
+
+## 13. How to Verify Each Session's Work
 
 After every session, before you consider a module "done," check these items:
 
@@ -753,7 +777,9 @@ This is the exact scenario you've been burned by before. Here's how to handle it
 
 ---
 
-## 11. Timeline for 4/1/26 Launch
+<a id="timeline"></a>
+
+## 14. Timeline for 4/1/26 Launch
 
 Today is approximately March 4, 2026. Launch target is April 1, 2026 — roughly **28 days**.
 
@@ -779,7 +805,9 @@ Today is approximately March 4, 2026. Launch target is April 1, 2026 — roughly
 
 ---
 
-## 12. Quick Reference — All Initialization Prompts
+<a id="initialization-prompts"></a>
+
+## 15. Quick Reference — All Initialization Prompts
 
 Save these somewhere accessible (a Google Doc, a local file, wherever). When it's time to start a new module, just copy-paste the right one.
 
