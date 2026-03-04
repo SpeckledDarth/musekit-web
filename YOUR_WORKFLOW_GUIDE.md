@@ -11,6 +11,8 @@
 1. [Before You Start — Protect What You Have](#1-before-you-start--protect-what-you-have)
 2. [One-Time GitHub Setup](#2-one-time-github-setup)
 2B. [Secrets Reference — Which Secrets Go Where](#2b-secrets-reference--which-secrets-go-where)
+2C. [Confirmed Tech Stack](#2c-confirmed-tech-stack)
+2D. [Open Issues Tracker](#2d-open-issues-tracker)
 3. [How Each Module Session Works (Your Repeatable Process)](#3-how-each-module-session-works-your-repeatable-process)
 4. [Phase 1: Foundation Modules](#4-phase-1-foundation-modules-sessions-2-4)
 5. [Phase 2: Core Service Modules](#5-phase-2-core-service-modules-sessions-5-8)
@@ -259,6 +261,123 @@ At integration time, this Repl needs every secret because it runs the full app. 
 - **Sentry secrets** (`NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`) only go in the Integration Repl. Individual modules don't need error monitoring — that happens at the app level.
 - **Social platform OAuth secrets** (Twitter, LinkedIn, Facebook, etc.) only go in the PassivePost Repl and the Integration Repl. No other module talks to social platforms.
 - **Google OAuth** appears in both `musekit-auth` (for login with Google) and `musekit-passivepost` (for YouTube/Google connections). Same credentials, two Repls.
+- **`RESEND_API_KEY`** — Confirmed: emails are working in the monolithic app, but the secret may be under a different name. Will investigate the pre-crash GitHub code and correct this during Session 7 (email module). Keys are available from the Resend dashboard.
+- **`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`** — Not yet added. Stripe is 100% in development mode, which may be why this hasn't been caught. Keys are available. Will be added during Session 6 (billing module).
+
+---
+
+## 2C. Confirmed Tech Stack
+
+This is the verified, agreed-upon technology stack. Every module session should reference this to avoid assumptions or guessing.
+
+### Core Framework
+| Technology | Version | Notes |
+|-----------|---------|-------|
+| Next.js | **14.2.18** | App Router. Overview doc says "16+" but actual code is 14. **Stay on 14 for stability during rebuild.** |
+| React | **18.3.1** | |
+| TypeScript | Yes | Strict mode |
+| Turborepo | Latest | Monorepo management |
+| npm workspaces | Yes | Package linking |
+
+### Frontend / UI
+| Technology | Version/Detail | Notes |
+|-----------|---------------|-------|
+| Tailwind CSS | **v3.4.x** | **NEVER upgrade to v4** — breaks PostCSS. This is a hard rule. |
+| shadcn/ui | 70+ components | Base component library |
+| CVA (class-variance-authority) | Latest | Component variant system |
+| 950-scale CSS variables | `--primary-50` through `--primary-950` | Single source of truth for all colors |
+| Dark/light mode | `class` strategy | Theme toggle in header |
+| Interactive states | `hover-elevate`, `active-elevate-2`, `toggle-elevate` | Primary palette CSS variables |
+| Hero section | 6 styles | full-width, split, video, pattern, floating mockup, photo collage |
+| Landing sections | 14 configurable | All toggleable and orderable from admin |
+| Header | Configurable | bg color, text color, opacity, sticky/relative, transparent, border |
+| Footer | Configurable | bg color, text color, bg image, 3 layout modes (4-column, minimal, centered) |
+
+### Database / Backend
+| Technology | Detail | Notes |
+|-----------|--------|-------|
+| Supabase PostgreSQL | 15+ core tables + 5 extension tables | Already exists — do NOT rebuild |
+| Supabase Auth | 5 OAuth + email/password + Magic Link + SSO/SAML | Already configured |
+| Supabase Storage | Avatars + branding images | Custom buckets exist (details TBD — user to share) |
+| Row Level Security | Policies on key tables | Already configured |
+| Database extension pattern | `migrations/core/` vs `migrations/extensions/` | Core = MuseKit, Extensions = PassivePost |
+
+### Services / APIs
+| Service | Purpose | Status |
+|---------|---------|--------|
+| Stripe | Subscription billing, checkout, customer portal | Working (dev mode). Missing publishable key in secrets. |
+| Resend | Transactional emails | Working. Secret name may be incorrect — to be fixed. |
+| xAI Grok | Primary AI provider | Working |
+| OpenAI | Alternate AI provider | Configurable from admin |
+| Anthropic | Alternate AI provider | Configurable from admin |
+| Upstash Redis | BullMQ queues + rate limiting | Working. 10 job types (6 core + 4 social). |
+| Sentry | Error monitoring (server + browser) | Working via tunnel route |
+| Plausible | Privacy-friendly analytics | **NOT fully integrated** — Next.js conflict. Post-launch task. |
+| n8n | Workflow automation agents | **NOT integrated** — architecture exists, agents not connected. Post-launch task. |
+
+### Authentication (7 Methods)
+| Method | Default State | Admin Toggleable? |
+|--------|--------------|-------------------|
+| Email/password with verification | Enabled | No (always on) |
+| Google OAuth | Enabled | Yes |
+| GitHub OAuth | Disabled | Yes |
+| Apple OAuth | Disabled | Yes |
+| Twitter/X OAuth | Disabled | Yes |
+| Magic Links | Enabled | Yes |
+| SSO/SAML | Disabled | Yes |
+
+### PassivePost Extension
+| Feature | Detail |
+|---------|--------|
+| Social dashboard | 10 pages with dedicated sidebar |
+| Subscription tiers | Starter (free, 3 accounts, 30 posts/mo), Basic ($29, 10/300), Premium ($99, unlimited) |
+| Social platforms | 10 total: Twitter/X, LinkedIn, Instagram, YouTube, Facebook, TikTok, Reddit, Pinterest, Snapchat, Discord |
+| Platform API status | Twitter/X, LinkedIn, Instagram — full implementation. YouTube, Facebook, TikTok, Reddit, Pinterest, Snapchat, Discord — **stubbed methods** |
+| AI post generation | 15 niche-specific prompt templates |
+| Brand preferences | Niche, tone, audience, location, goals, frequency, sample URLs, AI voice fine-tuner |
+| Background jobs | 4 social job types via BullMQ |
+| Social token encryption | `SOCIAL_ENCRYPTION_KEY` for OAuth tokens |
+
+### Testing
+| Tool | Detail |
+|------|--------|
+| Playwright | 92 E2E tests across 7 files + 8 PassivePost tests = **100 total** |
+| Plan | Reuse tests at final integration (Session 17), fix any that break |
+
+### Legal & Compliance
+- 9 legal pages with dynamic variable replacement
+- Cookie consent banner
+- MFA and password requirement settings (admin-configurable)
+
+---
+
+## 2D. Open Issues Tracker
+
+These are known issues that will be addressed at specific points during the build. Every initialization prompt should remind the agent of any open issues relevant to that module.
+
+| # | Issue | Severity | When to Fix | Details |
+|---|-------|----------|------------|---------|
+| 1 | `RESEND_API_KEY` — secret name may be incorrect | Medium | Session 7 (email) | Emails work in monolithic app. Secret may be under wrong name. Check pre-crash GitHub code. Keys available from Resend dashboard. |
+| 2 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` — not in secrets | Medium | Session 6 (billing) | Stripe is in dev mode. Client-side checkout needs this key. Keys available. |
+| 3 | Plausible — not fully integrated | Low | Session 18 (production) | Was conflicting with Next.js version at time of integration. Believed to be resolved now. Return to this post-rebuild. |
+| 4 | n8n agents — not connected | Low | Session 18 (production) | Webhook architecture exists (8 event types, HMAC signing). n8n agents themselves not wired up yet. |
+| 5 | Next.js version mismatch — docs say 16+, code is 14.2.18 | Info | All sessions | **Decision: Stay on 14.2.18 for stability.** Do NOT upgrade during rebuild. Consider upgrade post-launch. |
+| 6 | Supabase Storage buckets — custom buckets not documented | Medium | Session 4 (database) | User will share bucket details before database module is built. |
+| 7 | 7 of 10 social platform APIs are stubbed | Low | Post-launch | Twitter/X, LinkedIn, Instagram have full implementations. Other 7 platforms have stubbed methods. |
+| 8 | 100 Playwright E2E tests — need migration | Low | Session 17 (final integration) | Tests exist in pre-crash GitHub repo. Reuse at integration time, fix any that break due to restructuring. |
+
+### How Open Issues Affect Module Sessions
+
+- **Sessions 2-3 (shared, design-system):** No open issues affect these modules.
+- **Session 4 (database):** Issue #6 — need Supabase Storage bucket details from user before starting.
+- **Session 5 (auth):** No open issues. Note: Next.js stays at 14.2.18 (Issue #5).
+- **Session 6 (billing):** Issue #2 — add `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to secrets.
+- **Session 7 (email):** Issue #1 — investigate and fix `RESEND_API_KEY` naming.
+- **Session 8 (services):** No open issues for this module directly.
+- **Sessions 10-13 (admin, cms, affiliate):** No open issues.
+- **Sessions 15-16 (PassivePost):** Issue #7 — 7 platform APIs are stubbed. Build the stubs as-is, do not try to implement full APIs.
+- **Session 17 (final integration):** Issue #8 — migrate and run Playwright tests.
+- **Session 18 (production):** Issues #3, #4 — integrate Plausible and n8n.
 
 ---
 
