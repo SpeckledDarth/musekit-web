@@ -18,7 +18,10 @@
     "@musekit/database": "*",
     "@musekit/billing": "*",
     "@musekit/email": "*",
-    "@musekit/services": "*"
+    "@musekit/services": "*",
+    "@musekit/admin": "*",
+    "@musekit/cms": "*",
+    "@musekit/affiliate": "*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -8,6 +8,9 @@ const nextConfig = {
     "@musekit/billing",
     "@musekit/email",
     "@musekit/services",
+    "@musekit/admin",
+    "@musekit/cms",
+    "@musekit/affiliate",
   ],
   experimental: {
     serverActions: {
