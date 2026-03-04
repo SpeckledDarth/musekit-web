@@ -1058,9 +1058,290 @@ Look in: src/app/(auth)/, src/lib/auth/, src/components/auth/, src/middleware.ts
 
 ---
 
-### Sessions 6-8 Prompts
+### Session 6 Prompt: `musekit-billing`
 
-These follow the same pattern. I will write the full prompts for billing, email, and services when you're ready to start those sessions. Each prompt will be this detailed — specifying every export, every table, every dependency, and pointing to the exact location in your existing codebase.
+```
+You are building the @musekit/billing package for the MuseKit SaaS platform.
+
+This is a standalone npm package that provides the complete Stripe billing system.
+The Stripe account exists but is in DEVELOPMENT MODE (test keys only).
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build
+
+### Stripe Client (src/stripe.ts)
+- Initialize Stripe with STRIPE_SECRET_KEY
+- Initialize client-side Stripe with NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+### Plan Definitions (src/plans.ts)
+- Plan tiers with feature limits:
+  - Starter: $0/mo (free), basic features
+  - Basic: $29/mo, expanded limits
+  - Premium: $99/mo, unlimited
+- Feature limits per tier (posts, accounts, team members, storage, etc.)
+- Monthly and annual billing options
+
+### Checkout (src/checkout.ts)
+- createCheckoutSession(userId, planId, interval) — creates Stripe checkout
+- createCustomerPortalSession(userId) — redirect to Stripe customer portal
+- getSubscriptionStatus(userId) — returns current plan and status
+
+### Webhook Handler (src/webhooks.ts)
+- verifyWebhookSignature(payload, signature)
+- Handle these events:
+  - checkout.session.completed — create/update subscription record
+  - customer.subscription.updated — sync plan changes
+  - customer.subscription.deleted — mark subscription canceled
+  - invoice.payment_succeeded — record successful payment
+  - invoice.payment_failed — mark subscription past_due
+
+### Feature Gating (src/gating.ts)
+- checkFeatureAccess(userId, feature) — can user use this feature?
+- getFeatureLimits(plan) — returns limits for a plan
+- isWithinLimit(userId, feature, currentUsage) — is user under their limit?
+- requirePlan(minimumPlan) — middleware/guard for API routes
+
+### Product Registry (src/registry.ts)
+- Multi-product tier resolution system
+- registerProduct(productConfig) — register a product's tier structure
+- resolveUserTier(userId, productId) — determine user's tier for a product
+
+### Subscription Helpers (src/helpers.ts)
+- isActive(subscription) — boolean
+- isPastDue(subscription) — boolean
+- isCanceled(subscription) — boolean
+- isTrialing(subscription) — boolean
+- daysUntilRenewal(subscription) — number
+- formatPlanName(plan) — display string
+
+### Dependencies
+- Install: @musekit/shared (from github:SpeckledDarth/musekit-shared)
+- Install: @musekit/database (from github:SpeckledDarth/musekit-database)
+- Install: stripe
+
+### Supabase Tables Used
+- subscriptions (read/write — subscription records)
+- profiles (read — user lookup for Stripe customer ID)
+
+### Environment Secrets Needed
+- STRIPE_SECRET_KEY
+- NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY (Open Issue #2 — add this key)
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+
+### Reference Code
+Original: github.com/SpeckledDarth/master-saas-muse
+Look in: src/lib/stripe/, src/app/api/stripe/, src/app/api/billing/, src/components/pricing/
+
+### Rules
+- Stripe is in DEVELOPMENT MODE — use test keys only
+- Export everything from src/index.ts
+- Create replit.md and MODULE.md
+- Do NOT create UI components — billing UI lives in admin and web app
+- This module is logic/API only (checkout, webhooks, gating, helpers)
+```
+
+---
+
+### Session 7 Prompt: `musekit-email`
+
+```
+You are building the @musekit/email package for the MuseKit SaaS platform.
+
+This is a standalone npm package that provides the complete email system using Resend.
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build
+
+### Resend Client (src/client.ts)
+- Initialize Resend with RESEND_API_KEY
+- sendEmail(to, subject, html, options?) — send a single email
+- sendBatchEmails(emails[]) — send multiple emails
+
+### Email Templates (src/templates/)
+Build React email templates using @react-email/components:
+- WelcomeEmail — sent after signup
+- VerificationEmail — email verification link
+- PasswordResetEmail — password reset link
+- SubscriptionConfirmEmail — after successful checkout
+- SubscriptionCanceledEmail — after cancellation
+- TeamInvitationEmail — invite to join organization
+- KPIReportEmail — weekly/monthly metrics summary with KPI data
+
+Each template should:
+- Accept dynamic props (userName, actionUrl, etc.)
+- Use consistent branding (app name, colors from BrandSettings)
+- Support both HTML and plain text fallback
+
+### Template Editor (src/editor.tsx)
+- EmailTemplateEditor component — admin UI for editing templates
+- Live preview panel (shows rendered email)
+- Variable insertion ({{userName}}, {{actionUrl}}, etc.)
+- Test email sending (send preview to admin's email)
+
+### Template Variable System (src/variables.ts)
+- replaceVariables(template, variables) — replace {{var}} placeholders
+- getAvailableVariables(templateType) — list variables for a template type
+- validateTemplate(template) — check for missing variables
+
+### Scheduled Reports (src/reports.ts)
+- generateKPIReport(period: 'weekly' | 'monthly') — gather KPI data
+- scheduleReport(config) — configure report schedule
+- sendScheduledReport(reportData) — format and send via Resend
+
+### Dependencies
+- Install: @musekit/shared (from github:SpeckledDarth/musekit-shared)
+- Install: @musekit/database (from github:SpeckledDarth/musekit-database)
+- Install: @musekit/design-system (from github:SpeckledDarth/musekit-design-system)
+- Install: resend, @react-email/components
+
+### Supabase Tables Used
+- email_templates (read/write — custom templates stored by admin)
+- profiles (read — user info for template variables)
+- brand_settings (read — app name, colors for email branding)
+- subscriptions (read — for KPI report data)
+
+### Environment Secrets Needed
+- RESEND_API_KEY (Open Issue #1 — check if this exists under a different name in the monolithic app. If not found, use the key from Resend dashboard.)
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+
+### Reference Code
+Original: github.com/SpeckledDarth/master-saas-muse
+Look in: src/lib/email/, src/lib/resend/, src/emails/, src/components/email/, src/app/api/email/
+
+### Rules
+- Export everything from src/index.ts
+- Create replit.md and MODULE.md
+- Template editor component uses @musekit/design-system components
+- All templates must render correctly in dark AND light email clients
+```
+
+---
+
+### Session 8 Prompt: `musekit-services`
+
+```
+You are building the @musekit/services package for the MuseKit SaaS platform.
+
+This is a standalone npm package that bundles four backend subsystems:
+notifications, webhooks, AI provider, and background jobs.
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build
+
+### Notifications Subsystem (src/notifications/)
+
+#### Server-side (src/notifications/server.ts)
+- createNotification(userId, type, title, message) — insert into DB
+- getUnreadCount(userId) — count unread notifications
+- markAllRead(userId) — mark all as read
+- getNotifications(userId, options?) — paginated list
+
+#### Client-side Components (src/notifications/components.tsx)
+- NotificationBell — bell icon with unread count badge
+- NotificationPopover — dropdown showing recent notifications with type-specific icons
+- Uses auto-polling to check for new notifications
+
+### Webhooks Subsystem (src/webhooks/)
+
+#### Webhook Dispatcher (src/webhooks/dispatcher.ts)
+- dispatchWebhook(event, payload) — fire webhook for an event
+- 8 event types: feedback_submitted, waitlist_entry, subscription_created, subscription_updated, subscription_canceled, team_invitation_sent, team_member_joined, contact_form_submitted
+- HMAC-SHA256 payload signing using webhook secret
+- Fire-and-forget delivery with retry logic (3 retries, exponential backoff)
+
+#### Webhook Config (src/webhooks/config.ts)
+- getWebhookConfig() — read webhook URL, secret, enabled events from DB
+- updateWebhookConfig(config) — save webhook settings
+- validateWebhookUrl(url) — verify URL is reachable
+
+### AI Provider Subsystem (src/ai/)
+
+#### Provider Abstraction (src/ai/provider.ts)
+- createAIProvider(config) — factory that returns provider based on config
+- Supports: xAI Grok (XAI_API_KEY), OpenAI, Anthropic
+- chatCompletion(messages, options?) — non-streaming response
+- streamChatCompletion(messages, options?) — streaming response
+
+#### AI Configuration (src/ai/config.ts)
+- getAIConfig() — read provider, model, temperature, max tokens, system prompt from DB
+- updateAIConfig(config) — save AI settings
+
+#### Help Widget (src/ai/help-widget.tsx)
+- HelpWidget component — floating AI chat button
+- Configurable system prompt and fallback email
+- NPS rating collection after AI responses
+- Independently toggleable via feature_toggles
+
+### Background Jobs Subsystem (src/jobs/)
+
+#### Queue Setup (src/jobs/queue.ts)
+- Initialize BullMQ with Upstash Redis connection
+- createQueue(name) — create a named queue
+- addJob(queue, data, options?) — add job with optional delay/retry
+
+#### 6 Core Job Processors (src/jobs/processors.ts)
+- emailDelivery — process queued email sends
+- webhookRetry — retry failed webhook deliveries
+- reportGeneration — generate scheduled reports
+- metricsReport — compile and send KPI reports
+- metricsAlert — check thresholds and send alerts
+- tokenRotation — automated API token rotation
+
+#### Rate Limiting (src/jobs/rate-limiter.ts)
+- createRateLimiter(config) — sliding window algorithm using Upstash Redis
+- checkRateLimit(key, limit, window) — returns allowed/denied
+- In-memory fallback when Redis is unavailable
+
+### Dependencies
+- Install: @musekit/shared (from github:SpeckledDarth/musekit-shared)
+- Install: @musekit/database (from github:SpeckledDarth/musekit-database)
+- Install: bullmq, @upstash/redis, openai, lucide-react
+
+### Supabase Tables Used
+- notifications (read/write — notification CRUD)
+- webhook_configs (read/write — webhook settings)
+- feature_toggles (read — AI enable/disable, help widget toggle)
+- api_keys (read — AI provider key lookup)
+- audit_logs (write — log webhook dispatches)
+
+### Environment Secrets Needed
+- XAI_API_KEY
+- UPSTASH_REDIS_REST_URL
+- UPSTASH_REDIS_REST_TOKEN
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+
+### Reference Code
+Original: github.com/SpeckledDarth/master-saas-muse
+Look in: src/lib/notifications/, src/components/notifications/, src/lib/webhooks/, src/lib/ai/, src/lib/jobs/, src/lib/queue/, src/lib/rate-limit/
+
+### Rules
+- Export everything from src/index.ts
+- Create replit.md and MODULE.md
+- NotificationBell and HelpWidget use @musekit/design-system is NOT a dependency — use lucide-react for icons and basic HTML/Tailwind for UI
+- The AI provider must be pluggable — never hardcode a specific provider
+- Rate limiter MUST have in-memory fallback (do not crash if Redis is down)
+```
 
 ---
 
@@ -1095,9 +1376,721 @@ After integration:
 
 ---
 
-### Sessions 10-18 Prompts
+### Sessions 10-11 Prompt: `musekit-admin` (Part 1 — Session 10)
 
-Same pattern — I will write these when you reach those sessions. Each one will be fully detailed with exports, tables, dependencies, and reference code locations.
+```
+You are building the @musekit/admin package for the MuseKit SaaS platform.
+
+This is the LARGEST module in the system. It will be built across 2 sessions.
+This is Session 10 (Part 1). Focus on: admin layout, overview, user management,
+and metrics dashboard. Session 11 (Part 2) will add the Setup Dashboard and
+remaining features.
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build in Part 1
+
+### Admin Layout (src/layout/)
+- AdminSidebar — collapsible sidebar with navigation sections
+- AdminHeader — search bar, user menu, breadcrumbs
+- AdminLayout — wrapper component combining sidebar + header + content area
+- Breadcrumb — dynamic breadcrumb navigation
+
+### Overview Page (src/pages/overview.tsx)
+- High-level metrics cards (total users, active subs, MRR)
+- Quick action cards (manage users, view logs, settings)
+- Recent activity feed
+
+### User Management (src/pages/users/)
+- UserList — table with search, filter by role/status, pagination
+- UserDetail — profile info, subscription status, activity timeline
+- TeamMembers — org members view with role management
+- AdminNotes — notes system for customer service tracking per user
+- UserImpersonation — impersonate user (30-minute sessions with audit logging)
+
+### Metrics Dashboard (src/pages/metrics.tsx)
+- 10 KPI cards: Total Users, New Users (30d), Active Subscriptions, MRR, ARPU,
+  LTV, Churn Rate, Conversion Rate, Feedback Count, Waitlist Count
+- NPS Score card with color-coded Net Promoter Score
+- User Growth line chart
+- Revenue Growth line chart
+- Configurable alert thresholds for churn rate and user growth
+- "Email Report" button (triggers KPI email via @musekit/email)
+- "Check Alerts" button (evaluates thresholds and shows results)
+
+### Audit Log Viewer (src/pages/audit-log.tsx)
+- Filterable, searchable audit log table
+- Filter by: user, action, resource type, date range
+- Expandable rows showing full metadata/payload
+
+### Dependencies
+- Install: @musekit/shared (from github:SpeckledDarth/musekit-shared)
+- Install: @musekit/database (from github:SpeckledDarth/musekit-database)
+- Install: @musekit/design-system (from github:SpeckledDarth/musekit-design-system)
+- Install: @musekit/auth (from github:SpeckledDarth/musekit-auth)
+- Install: @musekit/billing (from github:SpeckledDarth/musekit-billing)
+- Install: recharts (for charts), lucide-react (for icons)
+
+### Supabase Tables Used
+- profiles (read/write — user management)
+- organizations (read — org info)
+- team_members (read — team membership)
+- subscriptions (read — subscription status for users)
+- audit_logs (read/write — audit log viewer + impersonation logging)
+- notifications (read — notification counts for overview)
+- feedback (read — feedback count for metrics)
+- waitlist (read — waitlist count for metrics)
+
+### Environment Secrets Needed
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_SECRET_KEY (for subscription lookups)
+
+### Reference Code
+Original: github.com/SpeckledDarth/master-saas-muse
+Look in: src/app/admin/, src/app/(admin)/, src/components/admin/, src/app/api/admin/
+
+### Rules
+- All UI uses @musekit/design-system components
+- Admin pages must check user role — only admin users can access
+- Export everything from src/index.ts
+- Create replit.md and MODULE.md
+- MODULE.md must list Part 2 features as "NOT YET BUILT — Session 11"
+```
+
+---
+
+### Session 11 Prompt: `musekit-admin` (Part 2 — Continuation)
+
+```
+Continue building the @musekit/admin package. Read replit.md and MODULE.md
+to understand what this module is and what was built in Part 1.
+
+Check src/index.ts to see what has been built so far. This session adds
+the Setup Dashboard and remaining admin features.
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build in Part 2
+
+### Setup Dashboard (src/pages/setup/)
+11 sub-pages with sidebar navigation:
+
+1. **Branding** (setup/branding.tsx)
+   - Logo upload (Supabase Storage), app name, description
+   - Primary color picker with live preview
+   - Hero style selector (6 styles: full-width, split, video, pattern, floating mockup, photo collage)
+   - Header config: bg color, text color, opacity slider, sticky/relative toggle, transparent mode, border toggle
+   - Footer config: bg color, text color, bg image, layout mode (4-column, minimal, centered)
+
+2. **Content** (setup/content.tsx)
+   - Homepage section list with drag-and-drop ordering
+   - Per-section background color pickers
+   - Enable/disable individual sections
+   - 14 section types (hero, logo marquee, counters, features, testimonials, process steps, FAQ, founder letter, comparison bars, screenshot showcase, bottom CTA, image collage, image+text, feature sub-pages)
+
+3. **Pages** (setup/pages.tsx)
+   - About page content editor
+   - Contact page configuration
+   - Custom pages CRUD
+   - Terms, privacy, and other legal page settings
+
+4. **Pricing** (setup/pricing.tsx)
+   - Plan editor (name, price, features list, Stripe price ID)
+   - Monthly/annual toggle
+   - Feature comparison table editor
+
+5. **Social Links** (setup/social.tsx)
+   - Social media profile URL fields (Twitter, LinkedIn, GitHub, etc.)
+
+6. **Features & Integrations** (setup/features.tsx)
+   - Auth provider toggles (Google, GitHub, Apple, Twitter/X, Magic Link, SSO)
+   - AI feature enable/disable
+   - Webhook config (URL, secret, per-event toggles)
+   - Security settings
+   - Compliance settings
+
+7. **API Keys & Integrations** (setup/api-keys.tsx)
+   - Collapsible groups (collapsed by default) with status indicators (green/red/gray dots)
+   - Required/Optional labels (Supabase, Stripe, Resend = required)
+   - Format validation on save (Stripe sk_ prefix, Supabase URL pattern, etc.)
+   - Summary cards (total keys, required keys configured)
+   - Inline edit/reveal/delete with source badges (Dashboard vs Env Var)
+
+8. **Email Templates** (setup/email.tsx)
+   - Template list with edit buttons
+   - Editor with live preview (uses @musekit/email editor component)
+   - Test email sending
+
+9. **AI/Support** (setup/ai.tsx)
+   - AI provider selector (xAI, OpenAI, Anthropic)
+   - Model, temperature, max tokens, system prompt config
+   - Help widget config: system prompt, fallback email, enable/disable
+
+10. **Security/Compliance** (setup/security.tsx)
+    - SSO/SAML config (identity providers: Okta, Azure AD, Google Workspace)
+    - MFA settings
+    - Password requirements
+
+11. **PassivePost Settings** (setup/passivepost.tsx)
+    - Social platform configuration
+    - Default posting settings
+    - Placeholder for now — full config in PassivePost module
+
+### Other Admin Features
+
+- Feature Toggles page (src/pages/feature-toggles.tsx)
+  - List all toggles with enable/disable switches
+  - Group by category
+
+- Customer Service Tools (src/pages/customer-service.tsx)
+  - Subscription tracking per user
+  - Invoice history (via Stripe)
+  - Admin notes (built in Part 1)
+
+- Onboarding Funnel Analytics (src/pages/onboarding.tsx)
+  - Signup → verification → first login → first action funnel
+
+### Additional Supabase Tables Used (beyond Part 1)
+- brand_settings (read/write — branding config)
+- feature_toggles (read/write — toggle management)
+- email_templates (read/write — template editor)
+- content_posts (read — blog/content overview)
+- api_keys (read/write — API key management)
+
+### Reference Code
+Same as Part 1: src/app/admin/, src/components/admin/, src/app/api/admin/
+
+### Rules
+- All UI uses @musekit/design-system components
+- Color pickers should use standard HTML color inputs
+- Drag-and-drop for section ordering can use a simple list with up/down buttons if drag-and-drop library is too complex
+- Update MODULE.md to mark Part 2 features as "BUILT"
+- Update src/index.ts to export all new components
+```
+
+---
+
+### Session 12 Prompt: `musekit-cms`
+
+```
+You are building the @musekit/cms package for the MuseKit SaaS platform.
+
+This is a standalone npm package for content management: blog, landing pages,
+legal pages, and marketing tools.
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build
+
+### Blog/Changelog System (src/blog/)
+- BlogList — public page listing published posts
+- BlogPost — individual post page with markdown rendering
+- BlogEditor — admin markdown editor with live preview
+- BlogAdmin — admin CRUD interface (list, create, edit, delete, publish/draft)
+- Category/tag system for organizing posts
+
+### 14 Landing Page Sections (src/landing/)
+Each section is a standalone React component that reads its config from the database:
+
+1. HeroSection — 6 styles (full-width, split, video, pattern, floating mockup, photo collage)
+2. LogoMarquee — scrolling partner/client logos
+3. AnimatedCounters — key metrics with counting animation on scroll
+4. FeatureCards — icons and descriptions in a responsive grid
+5. TestimonialCarousel — customer stories with navigation
+6. ProcessSteps — numbered how-it-works sequence
+7. FAQSection — expandable question/answer accordion
+8. FounderLetter — portrait image, letter text, signature
+9. ComparisonBars — animated bar charts comparing before/after
+10. ScreenshotShowcase — product screenshots with layered backgrounds
+11. BottomHeroCTA — closing call-to-action section
+12. ImageCollage — fan-style overlapping images with hover animation
+13. ImageTextBlocks — alternating image + text rows
+14. FeatureSubPage — template for /features/[slug] dynamic pages
+
+- LandingPageBuilder — assembles sections in order from database config
+- Each section respects: enabled/disabled toggle, sort order, per-section background color
+
+### 9 Legal Pages (src/legal/)
+- TermsOfService, PrivacyPolicy, CookiePolicy, AcceptableUse, Accessibility,
+  DataHandling, DMCA, AIDataUsage, SecurityPolicy
+- Dynamic variable replacement: {{appName}}, {{companyName}}, {{supportEmail}}, {{effectiveDate}}
+- All legal pages share a common layout with sidebar navigation
+
+### Marketing Tools (src/marketing/)
+- WaitlistForm — email collection form for pre-launch mode
+- WaitlistAdmin — admin view with CSV export
+- FeedbackWidget — floating widget with NPS rating (0-10 scale)
+- AnnouncementBar — top banner with admin controls (text, link, dismiss)
+- CookieConsentBanner — configurable cookie consent with accept/decline
+- SEOHead — component that generates meta tags, Open Graph, JSON-LD
+- Sitemap — auto-generated sitemap.xml
+- RobotsTxt — auto-generated robots.txt
+
+### Custom Pages (src/pages/)
+- CustomPage — dynamic page renderer
+- CustomPageEditor — admin page builder
+
+### Dependencies
+- Install: @musekit/shared (from github:SpeckledDarth/musekit-shared)
+- Install: @musekit/database (from github:SpeckledDarth/musekit-database)
+- Install: @musekit/design-system (from github:SpeckledDarth/musekit-design-system)
+- Install: react-markdown, remark-gfm (for blog markdown rendering)
+- Install: lucide-react (for icons)
+
+### Supabase Tables Used
+- content_posts (read/write — blog CRUD)
+- brand_settings (read — app name, colors for branding)
+- feature_toggles (read — which sections are enabled)
+- waitlist (read/write — waitlist entries)
+- feedback (read/write — feedback submissions)
+
+### Environment Secrets Needed
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+
+### Reference Code
+Original: github.com/SpeckledDarth/master-saas-muse
+Look in: src/app/blog/, src/app/(marketing)/, src/components/landing/, src/components/marketing/, src/app/(legal)/, src/app/features/
+
+### Rules
+- All UI uses @musekit/design-system components
+- Every landing section must support dark mode
+- Legal pages must use dynamic variable replacement — never hardcode app name
+- Export everything from src/index.ts
+- Create replit.md and MODULE.md
+```
+
+---
+
+### Session 13 Prompt: `musekit-affiliate`
+
+```
+You are building the @musekit/affiliate package for the MuseKit SaaS platform.
+
+This is a standalone npm package for the complete affiliate/referral program.
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build
+
+### Affiliate User Dashboard (src/dashboard/)
+- AffiliateDashboard — overview with earnings summary, click stats
+- AffiliateAnalytics — charts showing clicks, conversions, revenue over time
+- AffiliateReferrals — list of referred users with status
+- AffiliateEarnings — earnings history with date range filter
+- AffiliatePayouts — pending and completed payouts
+- AffiliateResources — marketing materials (banners, copy, links)
+- AffiliateTools — link generator, banner embed codes
+- AffiliateNews — updates/announcements from admin
+- AffiliateMessages — messaging between affiliate and admin
+- AffiliateSettings — account settings, payment info
+- AffiliateSupport — support request form
+
+### Affiliate Admin (src/admin/)
+- AffiliateApplications — review, approve, reject applications
+- AffiliateSettings — commission rates, cookie duration, min payout
+- AffiliateAssets — upload/manage marketing materials
+- AffiliateMilestones — achievement definitions (first sale, 10 sales, etc.)
+- AffiliateTiers — bronze, silver, gold tier definitions with commission rates
+- AffiliateBroadcasts — send messages/announcements to all affiliates
+- AffiliateMembers — active affiliate list with performance stats
+- AffiliateNetworks — affiliate network integration settings
+- AffiliateContests — promotional campaign management
+- AffiliatePayoutRuns — batch payment processing
+- AffiliateDiscountCodes — create and manage discount codes
+
+### Core Logic (src/core/)
+- trackReferral(referralCode, visitorId) — record a click
+- attributeConversion(userId, referralCode) — link signup to affiliate
+- calculateCommission(saleAmount, affiliateTier) — compute earnings
+- processPayoutRun(affiliateIds) — batch payout calculation
+- generateReferralLink(affiliateId, campaign?) — create tracking URL
+- validateReferralCode(code) — check if code is valid and active
+
+### Dependencies
+- Install: @musekit/shared (from github:SpeckledDarth/musekit-shared)
+- Install: @musekit/database (from github:SpeckledDarth/musekit-database)
+- Install: @musekit/design-system (from github:SpeckledDarth/musekit-design-system)
+- Install: @musekit/billing (from github:SpeckledDarth/musekit-billing)
+- Install: recharts (for analytics charts), lucide-react (for icons)
+
+### Supabase Tables Used
+Note: The affiliate system may need additional tables beyond the current 15+ core tables.
+Check the existing database for affiliate-related tables. If they don't exist yet,
+document the needed tables in MODULE.md but do NOT create them in Supabase.
+Use mock data structures that match the planned schema.
+
+### Environment Secrets Needed
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_SECRET_KEY (for commission tracking against real payments)
+
+### Reference Code
+Original: github.com/SpeckledDarth/master-saas-muse
+Look in: src/app/affiliate/, src/app/(affiliate)/, src/components/affiliate/, src/app/admin/affiliates/
+
+### Rules
+- All UI uses @musekit/design-system components
+- Export everything from src/index.ts
+- Create replit.md and MODULE.md
+- If affiliate tables don't exist in Supabase yet, document the needed schema in MODULE.md
+```
+
+---
+
+### Session 14 Prompt: Integration Checkpoint 2
+
+```
+Integration checkpoint 2. Read replit.md and MULTI_REPL_PLAN.md for context.
+
+Pull all Tier 3 feature modules into the Turborepo monorepo.
+Tier 1 and Tier 2 modules were integrated in Session 9.
+
+New modules to integrate (all on GitHub under SpeckledDarth):
+- musekit-admin → packages/admin/
+- musekit-cms → packages/cms/
+- musekit-affiliate → packages/affiliate/
+
+For each new module:
+1. Pull the code from its GitHub repo into the packages/ directory
+2. Update package.json dependencies from "github:..." to workspace "*"
+3. Wire pages and API routes into apps/web/
+
+Admin pages should be at: /admin/*
+Blog pages should be at: /blog/*
+Legal pages should be at: /terms, /privacy, /cookies, etc.
+Affiliate pages should be at: /affiliate/*
+Landing page sections should render on the homepage
+
+After integration:
+1. Run npm install
+2. Start the dev server (port 5000)
+3. Verify the app compiles and loads
+4. Verify admin dashboard is accessible (requires admin user)
+5. Verify blog page renders
+6. Verify at least one legal page renders
+7. Fix any import path or type mismatch issues
+
+This checkpoint should result in the FULL MuseKit core running —
+everything except PassivePost.
+```
+
+---
+
+### Sessions 15-16 Prompt: `musekit-passivepost` (Part 1 — Session 15)
+
+```
+You are building the @musekit/passivepost package for the MuseKit SaaS platform.
+
+This is the PassivePost AI social media scheduling product. It will be built
+across 2 sessions. This is Session 15 (Part 1). Focus on: dashboard layout,
+compose, queue, calendar, brand preferences, and connections.
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build in Part 1
+
+### Dashboard Layout (src/layout/)
+- SocialSidebar — dedicated sidebar for PassivePost (separate from main app sidebar)
+- SocialHeader — PassivePost-specific header
+- SocialLayout — wrapper component
+- Navigation items: Posts, Queue, Calendar, Blog Flywheel, Compose, Articles,
+  Autopilot, Engagement, Intelligence, Revenue, Connections, Settings
+
+### Posts Page (src/pages/posts.tsx)
+- Post list with status filters (draft, scheduled, published, failed)
+- Bulk actions (delete, reschedule, duplicate)
+- Post card showing: content preview, platforms, scheduled time, status badge
+
+### Compose Page (src/pages/compose.tsx)
+- AI post generator with 15 niche-specific prompt templates
+- Platform selector (which platforms to post to)
+- Content editor with character count per platform
+- Media attachment (image upload)
+- Schedule picker (date/time or "post now")
+- Preview per platform (how the post will look on each)
+
+### Queue Page (src/pages/queue.tsx)
+- Post queue management
+- Drag-and-drop or up/down reordering
+- Quick edit inline
+- Pause/resume queue
+
+### Calendar Page (src/pages/calendar.tsx)
+- Monthly and weekly calendar views
+- Posts shown on their scheduled date/time
+- Click to edit a post
+- Drag to reschedule
+
+### Brand Preferences (src/pages/brand.tsx)
+- Business niche selector
+- Brand tone selector (professional, casual, humorous, etc.)
+- Target audience description
+- Location/market
+- Posting goals and frequency
+- Sample content URLs
+- AI Voice Fine-Tuner — paste writing samples, analyze voice characteristics
+
+### Connections Page (src/pages/connections.tsx)
+- Connected accounts list with status (connected, expired, error)
+- Connect button for each platform (10 platforms)
+- OAuth flow initiation for: Twitter/X, LinkedIn, Instagram, YouTube, Facebook,
+  TikTok, Reddit, Pinterest, Snapchat, Discord
+- Validate/reconnect buttons for existing connections
+- Note: Twitter/X, LinkedIn, Instagram have full API implementations.
+  YouTube, Facebook, TikTok, Reddit, Pinterest, Snapchat, Discord have STUBBED
+  methods (Open Issue #7). Build the stubs as-is.
+
+### Subscription Gating (src/gating.ts)
+- 3 tiers: Starter (free, 3 accounts, 30 posts/mo), Basic ($29, 10/300), Premium ($99, unlimited)
+- Upgrade banner component (shows at 80%+ usage)
+- Feature checks using @musekit/billing
+
+### Dependencies
+- Install: @musekit/shared (from github:SpeckledDarth/musekit-shared)
+- Install: @musekit/database (from github:SpeckledDarth/musekit-database)
+- Install: @musekit/design-system (from github:SpeckledDarth/musekit-design-system)
+- Install: @musekit/auth (from github:SpeckledDarth/musekit-auth)
+- Install: @musekit/billing (from github:SpeckledDarth/musekit-billing)
+- Install: @musekit/services (from github:SpeckledDarth/musekit-services)
+- Install: lucide-react, recharts, date-fns
+
+### Supabase Tables Used
+- social_posts (read/write — post CRUD)
+- social_accounts (read/write — connected accounts)
+- brand_preferences (read/write — brand settings)
+- post_queue (read/write — queue management)
+- profiles (read — user info)
+- subscriptions (read — tier checks)
+
+### Environment Secrets Needed
+- All Supabase secrets
+- STRIPE_SECRET_KEY
+- SOCIAL_ENCRYPTION_KEY
+- TWITTER_API_KEY, TWITTER_API_SECRET
+- LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET
+- FACEBOOK_APP_ID, FACEBOOK_APP_SECRET
+- DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
+- GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (for YouTube)
+- INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET
+
+### Reference Code
+Original: github.com/SpeckledDarth/master-saas-muse
+Look in: src/app/social/, src/app/(social)/, src/components/social/, src/app/api/social/
+
+### Rules
+- All UI uses @musekit/design-system components
+- Social sidebar is SEPARATE from the main app sidebar
+- Export everything from src/index.ts
+- Create replit.md and MODULE.md
+- MODULE.md must list Part 2 features as "NOT YET BUILT — Session 16"
+- Encrypt social platform tokens using SOCIAL_ENCRYPTION_KEY before storing
+```
+
+---
+
+### Session 16 Prompt: `musekit-passivepost` (Part 2 — Continuation)
+
+```
+Continue building the @musekit/passivepost package. Read replit.md and MODULE.md
+to understand what was built in Part 1.
+
+Check src/index.ts to see what exists. This session adds analytics, intelligence,
+autopilot, settings, and background jobs.
+
+## Tech Stack Rules
+- Next.js 14.2.18 (do NOT use 15+ or 16+ features)
+- React 18.3.1
+- Tailwind CSS v3.4.x (do NOT upgrade to v4)
+- TypeScript strict mode
+
+## What to Build in Part 2
+
+### Blog Flywheel Page (src/pages/flywheel.tsx)
+- Repurpose blog content into social posts
+- Select a blog post → AI generates platform-specific social posts
+- One-click schedule generated posts
+
+### Articles Page (src/pages/articles.tsx)
+- Content library management
+- Save/organize reference articles and inspiration
+- Tag/categorize content
+
+### Autopilot Page (src/pages/autopilot.tsx)
+- Automated posting rules and schedules
+- Configure: posting frequency per platform, optimal time windows
+- Enable/disable autopilot per platform
+- Queue auto-fill settings
+
+### Engagement/Analytics Page (src/pages/engagement.tsx)
+- Analytics dashboard: likes, shares, comments, reach, impressions
+- Per-platform breakdown
+- Per-post performance
+- Date range filter
+- Charts using recharts
+
+### Content Intelligence Page (src/pages/intelligence.tsx)
+- AI-powered content recommendations
+- Optimal posting time analysis per platform
+- Platform performance comparison
+- Content type analysis (which types perform best)
+
+### Revenue & ROI Page (src/pages/revenue.tsx)
+- Track social media impact on revenue
+- Lead attribution from social channels
+- ROI calculation per platform
+- Conversion tracking
+
+### Settings Page (src/pages/settings.tsx)
+- Auto-approve AI posts toggle
+- Default post status (draft/scheduled)
+- Timezone selector
+- Quiet hours configuration (don't post between X and Y)
+- Notification preferences
+- Security settings
+
+### Quick Generate FAB (src/components/quick-generate.tsx)
+- Floating action button for quick AI post generation
+- Appears on all PassivePost pages
+- Opens a mini compose dialog
+
+### 4 BullMQ Social Job Types (src/jobs/)
+- socialPosting — publish scheduled posts to platforms
+- platformSync — sync account status and analytics
+- analyticsFetching — pull engagement data from platforms
+- automatedQueueProcessing — auto-fill queue based on autopilot rules
+
+### Reference Code
+Same as Part 1: src/app/social/, src/components/social/, src/app/api/social/
+
+### Rules
+- All UI uses @musekit/design-system components
+- Update MODULE.md to mark Part 2 features as "BUILT"
+- Update src/index.ts to export all new components
+- Job processors should gracefully handle stubbed platform APIs (log warning, don't crash)
+```
+
+---
+
+### Session 17 Prompt: Final Integration
+
+```
+Final integration. Read replit.md and MULTI_REPL_PLAN.md for context.
+
+This is the final assembly of the complete application.
+
+## Step 1: Integrate PassivePost
+Pull musekit-passivepost from GitHub into packages/passivepost/.
+Update package.json dependencies to workspace "*".
+Wire PassivePost pages into apps/web/ at /social/* routes.
+
+## Step 2: Verify All Modules Are Integrated
+Confirm all 11 packages are in the packages/ directory:
+- shared, design-system, database, auth, billing, email, services,
+  admin, cms, affiliate, passivepost
+
+## Step 3: Full Application Testing
+1. Start dev server (port 5000)
+2. Verify landing page loads with all 14 sections
+3. Verify login/signup pages work
+4. Verify admin dashboard loads (overview, users, metrics, setup)
+5. Verify blog page renders
+6. Verify at least one legal page renders
+7. Verify social dashboard loads at /social
+8. Verify dark/light mode toggle works across all pages
+9. Check browser console for errors
+
+## Step 4: Migrate Playwright E2E Tests (Open Issue #8)
+Copy the Playwright test files from the pre-crash GitHub repo
+(github.com/SpeckledDarth/master-saas-muse). The tests are in:
+- Look for: tests/, e2e/, playwright/, or __tests__/ directories
+- There should be ~100 tests across ~8 files
+
+Run the tests against the integrated app. Fix any that break due to:
+- Changed import paths
+- Changed component selectors
+- Route changes
+Do NOT rewrite tests from scratch — fix only what breaks.
+
+## Step 5: Polish
+- Fix any TypeScript errors across the full build
+- Ensure all API routes return proper error responses
+- Verify no hardcoded values (app name, URLs, etc.)
+- Clean up any duplicate code between packages
+```
+
+---
+
+### Session 18 Prompt: Production Launch
+
+```
+Production launch preparation. Read replit.md for context.
+
+The app is fully assembled and tested. This session prepares for
+production deployment.
+
+## Step 1: Resolve Open Issues
+- Issue #3: Integrate Plausible analytics (should be compatible with Next.js 14 now)
+  - Add Plausible script to the app layout
+  - Configure domain in Plausible dashboard
+- Issue #4: Wire n8n agents to the webhook system
+  - This is configuration, not code — set up n8n workflows that listen to
+    the 8 webhook event types
+  - If n8n is not ready, skip and document as post-launch task
+
+## Step 2: Environment Configuration
+- Verify all 27 secrets are set in this Repl
+- Set NEXT_PUBLIC_APP_URL to the production domain
+- Switch Stripe from test to live keys (user decision — may keep test for now)
+- Verify Sentry DSN is configured
+
+## Step 3: Build Optimization
+- Run npx turbo build and fix any build errors
+- Verify no development-only code in production paths
+- Check bundle size — flag anything unusually large
+
+## Step 4: Deployment
+- Configure Vercel deployment from this repo
+- Set environment variables in Vercel dashboard
+- Deploy and verify the production URL loads
+- Test critical flows on production:
+  - Landing page loads
+  - Login/signup works
+  - Admin dashboard accessible
+  - Social dashboard accessible
+
+## Step 5: Post-Launch Documentation
+- Update replit.md with production URLs
+- Update MULTI_REPL_PLAN.md marking all sessions as complete
+- Create a brief LAUNCH_NOTES.md documenting:
+  - What's live
+  - Known limitations (7 stubbed social APIs, etc.)
+  - Next steps (post-MVP features from roadmap)
+```
 
 ---
 
@@ -1113,11 +2106,11 @@ Same pattern — I will write these when you reach those sessions. Each one will
 - Creating Repls and linking them to GitHub repos (~1 min each)
 - Adding Supabase/Stripe secrets to each Repl (~1 min each)
 - Pasting the initialization prompt (~30 seconds)
-- Verifying the work using the checklist in Section 10 (~5 min)
+- Verifying the work using the checklist in Section 13 (~5 min)
 - Moving to the next module when one is complete
 
 ### Your Daily Routine During Build
-1. Check: Is the current module done? (Use the Section 10 checklist)
+1. Check: Is the current module done? (Use the Section 13 checklist)
 2. If yes: Create the next Repl, paste the prompt, let it build
 3. If no: Open the same Repl, paste the continuation prompt, let it finish
 4. At integration checkpoints: Open this Repl, paste the integration prompt
