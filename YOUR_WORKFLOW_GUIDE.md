@@ -10,6 +10,7 @@
 
 1. [Before You Start — Protect What You Have](#1-before-you-start--protect-what-you-have)
 2. [One-Time GitHub Setup](#2-one-time-github-setup)
+2B. [Secrets Reference — Which Secrets Go Where](#2b-secrets-reference--which-secrets-go-where)
 3. [How Each Module Session Works (Your Repeatable Process)](#3-how-each-module-session-works-your-repeatable-process)
 4. [Phase 1: Foundation Modules](#4-phase-1-foundation-modules-sessions-2-4)
 5. [Phase 2: Core Service Modules](#5-phase-2-core-service-modules-sessions-5-8)
@@ -85,6 +86,182 @@ Your existing repo `master-saas-muse` stays as-is — that becomes the integrati
 
 ---
 
+## 2B. Secrets Reference — Which Secrets Go Where
+
+Your monolithic app has 27 secrets + 1 configuration. Not every Repl needs all of them. Here's the complete mapping so you know exactly which secrets to add to each Repl.
+
+### Your Complete Secrets Inventory
+
+| # | Secret Name | What It's For |
+|---|-------------|---------------|
+| 1 | `SESSION_SECRET` | Cookie/session signing |
+| 2 | `SUPABASE_SERVICE_ROLE_KEY` | Admin-level Supabase access (bypasses RLS) |
+| 3 | `STRIPE_SECRET_KEY` | Stripe server-side operations |
+| 4 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client-side Supabase access |
+| 5 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| 6 | `NEXT_PUBLIC_SENTRY_DSN` | Error monitoring (Sentry) |
+| 7 | `SENTRY_ORG` | Sentry organization name |
+| 8 | `SENTRY_PROJECT` | Sentry project name |
+| 9 | `XAI_API_KEY` | xAI/Grok AI API key |
+| 10 | `UPSTASH_REDIS_REST_TOKEN` | Redis queue authentication |
+| 11 | `UPSTASH_REDIS_REST_URL` | Redis queue URL |
+| 12 | `TEST_USER_EMAIL` | Test account for automated testing |
+| 13 | `TEST_USER_PASSWORD` | Test account password |
+| 14 | `SOCIAL_ENCRYPTION_KEY` | Encrypts social platform tokens |
+| 15 | `TWITTER_API_KEY` | Twitter/X OAuth |
+| 16 | `TWITTER_API_SECRET` | Twitter/X OAuth |
+| 17 | `LINKEDIN_CLIENT_ID` | LinkedIn OAuth |
+| 18 | `LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth |
+| 19 | `FACEBOOK_APP_ID` | Facebook OAuth |
+| 20 | `FACEBOOK_APP_SECRET` | Facebook OAuth |
+| 21 | `DISCORD_CLIENT_ID` | Discord OAuth |
+| 22 | `DISCORD_CLIENT_SECRET` | Discord OAuth |
+| 23 | `GOOGLE_CLIENT_ID` | Google OAuth |
+| 24 | `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| 25 | `INSTAGRAM_APP_ID` | Instagram OAuth |
+| 26 | `INSTAGRAM_APP_SECRET` | Instagram OAuth |
+| 27 | `GIT_URL` | Git repository URL (Replit internal) |
+
+**Configuration (not a secret):**
+- `NEXT_PUBLIC_APP_URL` = `https://master-saas-muse-u7ga.vercel.app`
+
+### Which Secrets Go to Which Repl
+
+Here's the lookup table. When you create a Repl, find it in the left column and add every secret that has a checkmark.
+
+| Secret | shared | design-system | database | auth | billing | email | services | admin | cms | affiliate | passivepost | Integration (this Repl) |
+|--------|--------|--------------|----------|------|---------|-------|----------|-------|-----|-----------|-------------|------------------------|
+| `SESSION_SECRET` | | | | ✓ | | | | | | | | ✓ |
+| `SUPABASE_SERVICE_ROLE_KEY` | | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `STRIPE_SECRET_KEY` | | | | | ✓ | | | ✓ | | ✓ | ✓ | ✓ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `NEXT_PUBLIC_SUPABASE_URL` | | | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `NEXT_PUBLIC_SENTRY_DSN` | | | | | | | | | | | | ✓ |
+| `SENTRY_ORG` | | | | | | | | | | | | ✓ |
+| `SENTRY_PROJECT` | | | | | | | | | | | | ✓ |
+| `XAI_API_KEY` | | | | | | | ✓ | | | | ✓ | ✓ |
+| `UPSTASH_REDIS_REST_TOKEN` | | | | | | | ✓ | | | | ✓ | ✓ |
+| `UPSTASH_REDIS_REST_URL` | | | | | | | ✓ | | | | ✓ | ✓ |
+| `TEST_USER_EMAIL` | | | | ✓ | | | | | | | | ✓ |
+| `TEST_USER_PASSWORD` | | | | ✓ | | | | | | | | ✓ |
+| `SOCIAL_ENCRYPTION_KEY` | | | | | | | | | | | ✓ | ✓ |
+| `TWITTER_API_KEY` | | | | | | | | | | | ✓ | ✓ |
+| `TWITTER_API_SECRET` | | | | | | | | | | | ✓ | ✓ |
+| `LINKEDIN_CLIENT_ID` | | | | | | | | | | | ✓ | ✓ |
+| `LINKEDIN_CLIENT_SECRET` | | | | | | | | | | | ✓ | ✓ |
+| `FACEBOOK_APP_ID` | | | | | | | | | | | ✓ | ✓ |
+| `FACEBOOK_APP_SECRET` | | | | | | | | | | | ✓ | ✓ |
+| `DISCORD_CLIENT_ID` | | | | | | | | | | | ✓ | ✓ |
+| `DISCORD_CLIENT_SECRET` | | | | | | | | | | | ✓ | ✓ |
+| `GOOGLE_CLIENT_ID` | | | | ✓ | | | | | | | ✓ | ✓ |
+| `GOOGLE_CLIENT_SECRET` | | | | ✓ | | | | | | | ✓ | ✓ |
+| `INSTAGRAM_APP_ID` | | | | | | | | | | | ✓ | ✓ |
+| `INSTAGRAM_APP_SECRET` | | | | | | | | | | | ✓ | ✓ |
+| `NEXT_PUBLIC_APP_URL` | | | | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **Total secrets per Repl** | **0** | **0** | **3** | **8** | **5** | **4** | **6** | **5** | **4** | **5** | **19** | **27** |
+
+### Quick Copy Lists Per Repl
+
+For your convenience, here are the exact secrets to add for each module:
+
+**musekit-shared:** No secrets needed.
+
+**musekit-design-system:** No secrets needed.
+
+**musekit-database (3 secrets):**
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+
+**musekit-auth (8 secrets):**
+- SESSION_SECRET
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- TEST_USER_EMAIL
+- TEST_USER_PASSWORD
+- NEXT_PUBLIC_APP_URL (as configuration, not secret)
+
+**musekit-billing (5 secrets):**
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_SECRET_KEY
+- NEXT_PUBLIC_APP_URL (as configuration)
+
+**musekit-email (4 secrets):**
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- RESEND_API_KEY (note: not in your current list — you may need to add this)
+- NEXT_PUBLIC_APP_URL (as configuration)
+
+**musekit-services (6 secrets):**
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- XAI_API_KEY
+- UPSTASH_REDIS_REST_URL
+- UPSTASH_REDIS_REST_TOKEN
+
+**musekit-admin (5 secrets):**
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_SECRET_KEY
+- NEXT_PUBLIC_APP_URL (as configuration)
+
+**musekit-cms (4 secrets):**
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- NEXT_PUBLIC_APP_URL (as configuration)
+
+**musekit-affiliate (5 secrets):**
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_SECRET_KEY
+- NEXT_PUBLIC_APP_URL (as configuration)
+
+**musekit-passivepost (19 secrets):**
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_SECRET_KEY
+- XAI_API_KEY
+- UPSTASH_REDIS_REST_URL
+- UPSTASH_REDIS_REST_TOKEN
+- SOCIAL_ENCRYPTION_KEY
+- TWITTER_API_KEY
+- TWITTER_API_SECRET
+- LINKEDIN_CLIENT_ID
+- LINKEDIN_CLIENT_SECRET
+- FACEBOOK_APP_ID
+- FACEBOOK_APP_SECRET
+- DISCORD_CLIENT_ID
+- DISCORD_CLIENT_SECRET
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- INSTAGRAM_APP_ID
+- INSTAGRAM_APP_SECRET
+- NEXT_PUBLIC_APP_URL (as configuration)
+
+**Integration Repl / this Repl (all 27):**
+At integration time, this Repl needs every secret because it runs the full app. You should add all 27 secrets here before running Integration Checkpoint 1 (Session 9).
+
+### Notes on Secrets
+
+- **`GIT_URL`** is a Replit internal secret. You don't need to manually add this to new Repls — Replit manages it when you import from GitHub.
+- **`RESEND_API_KEY`** is missing from your current list. You'll need to add it when you build the email module (Session 7). If your monolithic app was sending emails, this key exists somewhere — check your Resend dashboard.
+- **Sentry secrets** (`NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`) only go in the Integration Repl. Individual modules don't need error monitoring — that happens at the app level.
+- **Social platform OAuth secrets** (Twitter, LinkedIn, Facebook, etc.) only go in the PassivePost Repl and the Integration Repl. No other module talks to social platforms.
+- **Google OAuth** appears in both `musekit-auth` (for login with Google) and `musekit-passivepost` (for YouTube/Google connections). Same credentials, two Repls.
+
+---
+
 ## 3. How Each Module Session Works (Your Repeatable Process)
 
 Every module follows the exact same process. Once you do it once, you'll be able to do it in your sleep.
@@ -98,18 +275,15 @@ Every module follows the exact same process. Once you do it once, you'll be able
 5. Click **Import**
 6. Replit creates a new Repl linked to that GitHub repo
 
-### Step 2: Add Supabase Secrets (~1 minute)
+### Step 2: Add Secrets (~1-3 minutes)
 
-For modules that need database access (most of them), add your Supabase credentials as Repl secrets:
+Each module needs a different set of secrets. Look up the module in **Section 2B** above — it has the exact list for every Repl, including quick-copy lists.
+
 1. In the new Repl, go to **Secrets** (lock icon in the sidebar)
-2. Add these three secrets:
-   - `NEXT_PUBLIC_SUPABASE_URL` = your Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = your anon/public key
-   - `SUPABASE_SERVICE_ROLE_KEY` = your service role key
+2. Find the module's "Quick Copy List" in Section 2B
+3. Add each secret listed there — copy the values from your monolithic app's secrets
 
-For modules that also need Stripe:
-   - `STRIPE_SECRET_KEY` = your Stripe test key
-   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` = your Stripe publishable key
+**Tip:** Two modules need zero secrets (shared and design-system). Most modules need 3-6 secrets. The PassivePost module is the heaviest at 19 secrets because it connects to all social platforms.
 
 ### Step 3: Choose Build Mode
 
