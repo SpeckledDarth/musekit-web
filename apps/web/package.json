@@ -14,7 +14,11 @@
     "react-dom": "^18.3.1",
     "@musekit/design-system": "*",
     "@musekit/shared": "*",
-    "@musekit/auth": "*"
+    "@musekit/auth": "*",
+    "@musekit/database": "*",
+    "@musekit/billing": "*",
+    "@musekit/email": "*",
+    "@musekit/services": "*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

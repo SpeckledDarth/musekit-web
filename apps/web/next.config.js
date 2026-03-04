@@ -4,6 +4,10 @@ const nextConfig = {
     "@musekit/design-system",
     "@musekit/shared",
     "@musekit/auth",
+    "@musekit/database",
+    "@musekit/billing",
+    "@musekit/email",
+    "@musekit/services",
   ],
   experimental: {
     serverActions: {

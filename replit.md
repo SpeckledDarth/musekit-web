@@ -7,11 +7,12 @@ Enterprise SaaS platform built as a Turborepo monorepo. MuseKit is a reusable Sa
 - **Monorepo**: Turborepo with npm workspaces
 - **Framework**: Next.js 14 (App Router) + TypeScript
 - **Styling**: Tailwind CSS v3 with CSS variable-based 950-scale color model
-- **UI Components**: Custom design system (`@musekit/design-system`)
-- **Auth**: Supabase Auth + SSR
-- **Database**: Supabase PostgreSQL
-- **Billing**: Stripe
-- **Email**: Resend
+- **UI Components**: Custom design system (`@musekit/design-system`) — 24 components
+- **Auth**: Supabase Auth + SSR with OAuth (Google, GitHub, Apple, Twitter), Magic Links, password reset
+- **Database**: Supabase PostgreSQL with typed schema, query helpers, admin client
+- **Billing**: Stripe subscriptions with 3 plan tiers, feature gating, webhook handling
+- **Email**: Resend with 7 email templates, template editor, KPI reports
+- **Services**: Notifications, webhooks (8 event types), AI provider (xAI/OpenAI/Anthropic), BullMQ background jobs
 - **Queues**: BullMQ + Upstash Redis
 - **Monitoring**: Sentry + Plausible
 - **Deployment**: Vercel
@@ -21,12 +22,16 @@ Enterprise SaaS platform built as a Turborepo monorepo. MuseKit is a reusable Sa
 musekit/
 ├── apps/
 │   └── web/                    # Next.js web application (port 5000)
-│       ├── src/app/            # App Router pages
-│       └── src/components/     # App-level components
+│       ├── src/app/            # App Router pages (/, /login, /signup, /reset-password)
+│       └── src/components/     # App-level components (header, hero, features, pricing, footer, providers)
 ├── packages/
-│   ├── design-system/          # Shared UI components (Button, Card, Badge, etc.)
-│   ├── shared/                 # Shared utilities, types, config
-│   ├── auth/                   # Supabase auth clients + AuthProvider
+│   ├── shared/                 # Types, utilities, config (cn, formatCurrency, slugify, etc.)
+│   ├── design-system/          # 24 UI components (Button, Card, Badge, Dialog, Tabs, etc.)
+│   ├── database/               # Supabase clients (browser, server, admin), typed schema, query helpers
+│   ├── auth/                   # AuthProvider, LoginForm, SignupForm, PasswordResetForm, OAuthButtons, middleware
+│   ├── billing/                # Stripe plans, checkout, webhooks, feature gating, product registry
+│   ├── email/                  # Resend client, 7 email templates, template editor, reports
+│   ├── services/               # Notifications, webhooks, AI provider, BullMQ background jobs
 │   ├── config-ts/              # Shared TypeScript configurations
 │   └── config-eslint/          # Shared ESLint configurations (planned)
 ├── turbo.json                  # Turborepo pipeline configuration
@@ -36,16 +41,28 @@ musekit/
 ## Packages
 
 ### @musekit/web (apps/web)
-Main Next.js application. Landing page with hero, features, pricing sections. Dev server on port 5000.
-
-### @musekit/design-system (packages/design-system)
-Reusable UI components: Button (with loading state), Card, Badge, Input, Label, Sidebar, ThemeToggle, Avatar. Uses CVA for variants. Exports design tokens (colors, spacing, radius, shadow).
+Main Next.js application. Pages: landing (hero, features, pricing), login, signup, reset-password. Dev server on port 5000. Wraps all pages in AuthProvider.
 
 ### @musekit/shared (packages/shared)
-Shared utilities (cn, formatCurrency, formatDate, slugify, truncate, generateId), TypeScript types (User, Organization, Subscription, AuditLogEntry, Notification, BrandSettings, FeatureToggle), and app configuration.
+Shared utilities (cn, formatCurrency, formatDate, slugify, truncate, generateId), TypeScript types (User, Organization, TeamMember, Subscription, AuditLogEntry, Notification, BrandSettings, FeatureToggle, NavItem, AppConfig), and app configuration.
+
+### @musekit/design-system (packages/design-system)
+24 React UI components: Button, Card, Badge, Input, Label, Select, Switch, Textarea, Checkbox, Dialog, Dropdown, Popover, Sheet, Sidebar, Tabs, Table, Toast, Alert, Avatar, Progress, Skeleton, Separator, Tooltip, ThemeToggle. Uses CVA for variants. Exports design tokens (colors, spacing, radius, shadow). All components have "use client" directive for Next.js App Router compatibility.
+
+### @musekit/database (packages/database)
+Supabase browser, server, and admin clients via @supabase/ssr. Typed Database schema with 20 table types (profiles, organizations, team_members, subscriptions, audit_logs, notifications, brand_settings, feature_toggles, etc.). Query helpers (getUserById, getOrgMembers, getSubscription, etc.).
 
 ### @musekit/auth (packages/auth)
-Supabase browser and server clients via @supabase/ssr. React AuthProvider with useAuth hook for sign-in, sign-up, sign-out, and session management.
+Full auth system: AuthProvider with useAuth hook (signIn, signUp, signOut, signInWithOAuth, signInWithMagicLink, resetPassword, updatePassword). Components: LoginForm, SignupForm, PasswordResetForm, OAuthButtons, OAuthCallback. Auth middleware and route guards (withAuth, withRole, requireAuth). Depends on @musekit/database and @musekit/design-system.
+
+### @musekit/billing (packages/billing)
+Stripe integration: 3 plan tiers (Starter $0, Basic $29, Premium $99). Checkout sessions, customer portal, webhook handler (checkout.completed, subscription.updated/deleted, invoice events). Feature gating (checkFeatureAccess, isWithinLimit, requirePlan). Product registry for multi-product tier resolution. Subscription helpers (isActive, isPastDue, isCanceled, etc.). Has internal shared/database type stubs.
+
+### @musekit/email (packages/email)
+Resend email client. 7 email templates: Welcome, Verification, PasswordReset, SubscriptionConfirm, SubscriptionCanceled, TeamInvitation, KPIReport. Template variable replacement system. EmailTemplateEditor component. KPI report generation and scheduling. Has internal Supabase client for brand settings.
+
+### @musekit/services (packages/services)
+Backend services bundle. Notifications: NotificationBell component, server-side creation, polling. Webhooks: 8 event types, HMAC-SHA256 signing, retry logic. AI Provider: pluggable (xAI/OpenAI/Anthropic), HelpWidget chatbot. Background Jobs: BullMQ with 6 job types (email, webhook, report, metrics, alert, token rotation), rate limiter. Depends on @musekit/database.
 
 ### @musekit/config-ts (packages/config-ts)
 Shared tsconfig presets: base.json, nextjs.json, library.json.
@@ -61,14 +78,18 @@ Shared tsconfig presets: base.json, nextjs.json, library.json.
 - Dark mode via `class` strategy
 - All hosts allowed for Replit proxy compatibility
 - Workspace packages use `"main": "./src/index.ts"` (no build step needed for dev)
+- All design-system components have "use client" directive for Next.js App Router
+- Auth gracefully handles missing Supabase env vars (shows UI without auth functionality)
+- Billing and email packages have internal type stubs (not dependent on workspace @musekit/shared)
+
+## Integration Status (Session 9)
+- **Tier 1 (Foundation)**: shared, design-system, database — INTEGRATED
+- **Tier 2 (Core Services)**: auth, billing, email, services — INTEGRATED
+- **Tier 3 (Feature Modules)**: admin, cms, affiliate — NOT YET BUILT
+- **Tier 4 (Product Extension)**: passivepost — NOT YET BUILT
 
 ## Planned Packages (to be created)
 - `packages/admin/` — Admin dashboard components
-- `packages/billing/` — Stripe billing logic
 - `packages/affiliate/` — Affiliate program
 - `packages/passivepost/` — PassivePost product extension
-- `packages/jobs/` — BullMQ job processors
-- `packages/email/` — Resend email templates
 - `packages/cms/` — Blog/content management
-- `packages/notifications/` — In-app notification system
-- `packages/webhooks/` — Webhook automation

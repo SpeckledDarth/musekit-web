@@ -1,36 +1,11 @@
-export type UserRole = "admin" | "member" | "viewer";
-
-export interface NavItem {
-  title: string;
-  href: string;
-  icon?: string;
-  badge?: string;
-  children?: NavItem[];
-  roles?: UserRole[];
-}
-
-export interface AppConfig {
-  name: string;
-  description: string;
-  url: string;
-  support: {
-    email: string;
-  };
-  billing: {
-    provider: string;
-    plans: string[];
-  };
-  features: Record<string, boolean>;
-}
-
 export interface User {
   id: string;
   email: string;
-  name: string | null;
-  avatar_url: string | null;
-  role: UserRole;
-  created_at: string;
-  updated_at: string;
+  name: string;
+  avatar_url: string;
+  role: 'admin' | 'member' | 'viewer';
+  created_at: string | Date;
+  updated_at: string | Date;
 }
 
 export interface Organization {
@@ -38,7 +13,15 @@ export interface Organization {
   name: string;
   slug: string;
   owner_id: string;
-  created_at: string;
+  created_at: string | Date;
+}
+
+export interface TeamMember {
+  id: string;
+  org_id: string;
+  user_id: string;
+  role: string;
+  joined_at: string | Date;
 }
 
 export interface Subscription {
@@ -47,8 +30,8 @@ export interface Subscription {
   stripe_customer_id: string;
   stripe_subscription_id: string;
   plan: string;
-  status: "active" | "canceled" | "past_due" | "trialing";
-  current_period_end: string;
+  status: 'active' | 'canceled' | 'past_due' | 'trialing';
+  current_period_end: string | Date;
 }
 
 export interface AuditLogEntry {
@@ -56,10 +39,10 @@ export interface AuditLogEntry {
   user_id: string;
   action: string;
   resource_type: string;
-  resource_id: string | null;
-  metadata: Record<string, unknown>;
-  ip_address: string | null;
-  created_at: string;
+  resource_id: string;
+  metadata: Record<string, any>;
+  ip_address: string;
+  created_at: string | Date;
 }
 
 export interface Notification {
@@ -69,12 +52,12 @@ export interface Notification {
   title: string;
   message: string;
   read: boolean;
-  created_at: string;
+  created_at: string | Date;
 }
 
 export interface BrandSettings {
   app_name: string;
-  logo_url: string | null;
+  logo_url: string;
   primary_color: string;
   accent_color: string;
   hero_style: string;
@@ -90,4 +73,22 @@ export interface FeatureToggle {
   label: string;
   description: string;
   enabled: boolean;
+}
+
+export interface NavItem {
+  title: string;
+  href: string;
+  icon?: string;
+  badge?: string;
+  children?: NavItem[];
+  roles?: string[];
+}
+
+export interface AppConfig {
+  name: string;
+  description: string;
+  url: string;
+  support: string;
+  billing: string;
+  features: Record<string, boolean>;
 }

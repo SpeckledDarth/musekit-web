@@ -5,6 +5,9 @@ const config: Config = {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "../../packages/design-system/src/**/*.{js,ts,jsx,tsx}",
+    "../../packages/auth/src/**/*.{js,ts,jsx,tsx}",
+    "../../packages/email/src/**/*.{js,ts,jsx,tsx}",
+    "../../packages/services/src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {

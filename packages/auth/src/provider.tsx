@@ -1,31 +1,52 @@
 "use client";
 
-import * as React from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from "react";
+import type { User, Provider } from "@supabase/supabase-js";
 import { createBrowserClient } from "./clients";
-import type { User } from "@supabase/supabase-js";
 
-export interface AuthState {
+interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  signInWithOAuth: (provider: Provider) => Promise<{ error: Error | null }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
 }
 
-const AuthContext = React.createContext<AuthState | null>(null);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<User | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const supabase = React.useMemo(() => {
+interface AuthProviderProps {
+  children: ReactNode;
+  redirectTo?: string;
+}
+
+export function AuthProvider({ children, redirectTo }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const supabaseRef = useRef<ReturnType<typeof createBrowserClient> | null>(null);
+
+  if (typeof window !== "undefined" && !supabaseRef.current) {
     try {
-      return createBrowserClient();
+      supabaseRef.current = createBrowserClient();
     } catch {
-      return null;
+      // Supabase env vars not configured yet
     }
-  }, []);
+  }
 
-  React.useEffect(() => {
+  const supabase = supabaseRef.current;
+
+  useEffect(() => {
     if (!supabase) {
       setLoading(false);
       return;
@@ -36,40 +57,109 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
-  const signIn = async (email: string, password: string) => {
-    if (!supabase) throw new Error("Supabase not configured");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-  };
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      if (!supabase) return { error: new Error("Supabase not initialized") };
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error: error ? new Error(error.message) : null };
+    },
+    [supabase]
+  );
 
-  const signUp = async (email: string, password: string) => {
-    if (!supabase) throw new Error("Supabase not configured");
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-  };
+  const signUp = useCallback(
+    async (email: string, password: string) => {
+      if (!supabase) return { error: new Error("Supabase not initialized") };
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: redirectTo },
+      });
+      return { error: error ? new Error(error.message) : null };
+    },
+    [supabase, redirectTo]
+  );
 
-  const signOut = async () => {
-    if (!supabase) throw new Error("Supabase not configured");
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  };
+  const signOut = useCallback(async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+  }, [supabase]);
+
+  const signInWithOAuth = useCallback(
+    async (provider: Provider) => {
+      if (!supabase) return { error: new Error("Supabase not initialized") };
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo },
+      });
+      return { error: error ? new Error(error.message) : null };
+    },
+    [supabase, redirectTo]
+  );
+
+  const signInWithMagicLink = useCallback(
+    async (email: string) => {
+      if (!supabase) return { error: new Error("Supabase not initialized") };
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: redirectTo },
+      });
+      return { error: error ? new Error(error.message) : null };
+    },
+    [supabase, redirectTo]
+  );
+
+  const resetPassword = useCallback(
+    async (email: string) => {
+      if (!supabase) return { error: new Error("Supabase not initialized") };
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectTo ? `${redirectTo}/update-password` : undefined,
+      });
+      return { error: error ? new Error(error.message) : null };
+    },
+    [supabase, redirectTo]
+  );
+
+  const updatePassword = useCallback(
+    async (password: string) => {
+      if (!supabase) return { error: new Error("Supabase not initialized") };
+      const { error } = await supabase.auth.updateUser({ password });
+      return { error: error ? new Error(error.message) : null };
+    },
+    [supabase]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        signInWithOAuth,
+        signInWithMagicLink,
+        resetPassword,
+        updatePassword,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
-  const context = React.useContext(AuthContext);
+export function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
